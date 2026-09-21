@@ -11,7 +11,16 @@
 <!-- Google AdSense -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5607384951754093"
      crossorigin="anonymous"></script>
-<meta charset="utf-8"><title>연봉실수령액계산기 - 연봉별 실수령액 계산 결과</title>
+<meta charset="utf-8"><title>연봉 실수령액 계산기 2026 - 4대보험·세금 공제 후 월급 바로 계산</title>
+<meta name="description" content="2026년 4대보험 요율(국민연금 4.75%, 건강보험 3.595%)을 반영한 연봉 실수령액 계산기. 연봉을 입력하면 월 실수령액, 공제 내역, 소득 상위 %를 바로 계산합니다.">
+<link rel="canonical" href="https://krcalctools.github.io/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:site_name" content="연봉실수령액계산기">
+<meta property="og:title" content="연봉 실수령액 계산기 2026 - 4대보험·세금 공제 후 월급 바로 계산">
+<meta property="og:description" content="2026년 4대보험 요율(국민연금 4.75%, 건강보험 3.595%)을 반영한 연봉 실수령액 계산기. 연봉을 입력하면 월 실수령액, 공제 내역, 소득 상위 %를 바로 계산합니다.">
+<meta property="og:url" content="https://krcalctools.github.io/">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "연봉 실수령액 계산기", "url": "https://krcalctools.github.io/", "description": "2026년 4대보험 요율(국민연금 4.75%, 건강보험 3.595%)을 반영한 연봉 실수령액 계산기. 연봉을 입력하면 월 실수령액, 공제 내역, 소득 상위 %를 바로 계산합니다.", "applicationCategory": "FinanceApplication", "operatingSystem": "All", "inLanguage": "ko", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "KRW"}}</script>
 <meta name="google-site-verification" content="22jd1Q9gwpfGcwd0MvSlxlhC8mekAJ9CjNMXHGUHASE" />
 <meta name="naver-site-verification" content="2619bf9b6ab4ed06c679f8f24d5b50df019827ac" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -152,7 +161,7 @@
     </nav>
   </header>
 
-<h1>연봉 실수령액 계산기</h1>
+<h1>연봉 실수령액 계산기 (2026년 기준)</h1>
 <p>정확한 연봉을 입력하면 바로 계산됩니다. 아래 목록은 자주 찾는 연봉 구간별 상세 계산 결과입니다.</p>
 
 <div class="calc-box">
@@ -192,6 +201,21 @@
 </div>
 
 <p><a href="severance.html"><b>퇴직금 계산기</b></a> | <a href="unemployment.html"><b>실업급여 계산기</b></a> | <a href="dividend.html"><b>배당금 계산기</b></a></p>
+
+<h2>2026년 달라진 4대보험 요율 (근로자 부담분)</h2>
+<table>
+  <tr><th>항목</th><th>2025년</th><th>2026년</th></tr>
+  <tr><td>국민연금</td><td>4.5%</td><td><b>4.75%</b></td></tr>
+  <tr><td>건강보험</td><td>3.545%</td><td><b>3.595%</b></td></tr>
+  <tr><td>장기요양보험 (건강보험료 대비)</td><td>12.95%</td><td><b>13.14%</b></td></tr>
+  <tr><td>고용보험</td><td>0.9%</td><td><b>0.9%</b></td></tr>
+</table>
+<p class="source">국민연금 보험료율은 연금개혁에 따라 2026년부터 매년 0.5%p씩 올라 2033년 13%(근로자 6.5%)가 됩니다.
+국민연금 기준소득월액은 2026년 7월부터 상한 6,590,000원·하한 410,000원이 적용됩니다.
+출처: <a href="https://www.mohw.go.kr/board.es?mid=a10503010100&amp;bid=0027&amp;act=view&amp;list_no=1487279" target="_blank" rel="noopener">보건복지부 2026년 건강보험료율 결정</a>,
+<a href="https://www.mohw.go.kr/board.es?act=view&amp;bid=0027&amp;list_no=1487817&amp;mid=a10503000000" target="_blank" rel="noopener">보건복지부 2026년 장기요양보험료율</a>,
+<a href="https://www.nps.or.kr/pnsinfo/ntpsklg/getOHAF0038M0.do" target="_blank" rel="noopener">국민연금공단 연금보험료 안내</a></p>
+
 <h2>연봉 구간별 상세 계산 결과 (76개)</h2>
 <ul><li><a href="salary-3000.html">연봉 3,000만원 실수령액</a></li>
 <li><a href="salary-3100.html">연봉 3,100만원 실수령액</a></li>
@@ -284,15 +308,16 @@
 const PERCENTILE_TABLE = [[0.1, 104300], [1, 19950], [5, 11870], [10, 9120], [20, 6580], [30, 5060], [40, 4120], [50, 3420], [60, 2850], [70, 2420], [80, 1620], [90, 790]];
 
 
-const PENSION_RATE = 0.045, PENSION_CAP = 6370000, PENSION_FLOOR = 370000;
-const HEALTH_RATE = 0.03545, LTC_RATE_OF_HEALTH = 0.1295, EMPLOYMENT_RATE = 0.009;
+const PENSION_RATE = 0.0475, PENSION_CAP = 6590000, PENSION_FLOOR = 410000;
+const HEALTH_RATE = 0.03595, LTC_RATE_OF_HEALTH = 0.1314, EMPLOYMENT_RATE = 0.009;
+const EARNED_INCOME_DEDUCTION_CAP = 20000000;
 
 function earnedIncomeDeduction(g) {
   if (g <= 5000000) return g * 0.7;
   if (g <= 15000000) return 3500000 + (g - 5000000) * 0.4;
   if (g <= 45000000) return 7500000 + (g - 15000000) * 0.15;
   if (g <= 100000000) return 12000000 + (g - 45000000) * 0.05;
-  return 14750000 + (g - 100000000) * 0.02;
+  return Math.min(14750000 + (g - 100000000) * 0.02, EARNED_INCOME_DEDUCTION_CAP);
 }
 
 const TAX_BRACKETS = [
@@ -314,7 +339,8 @@ function earnedIncomeTaxCredit(tax, annual) {
   let cap;
   if (annual <= 33000000) cap = 740000;
   else if (annual <= 70000000) cap = Math.max(660000, 740000 - (annual - 33000000) * 0.008);
-  else cap = Math.max(500000, 660000 - (annual - 70000000) * 0.5);
+  else if (annual <= 120000000) cap = Math.max(500000, 660000 - (annual - 70000000) * 0.5);
+  else cap = Math.max(200000, 500000 - (annual - 120000000) * 0.5);
   return Math.min(credit, cap);
 }
 

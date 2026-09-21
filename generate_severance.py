@@ -6,7 +6,7 @@
 (근로자퇴직급여 보장법 제8조, 근로기준법 제2조)
 """
 import os
-from static_pages import SITE_NAME, GA_SNIPPET, FOOTER_NAV, SITE_STYLE, SITE_HEADER, FAVICON
+from static_pages import SITE_NAME, GA_SNIPPET, FOOTER_NAV, SITE_STYLE, SITE_HEADER, FAVICON, seo_meta
 
 OUTPUT_DIR = "docs"
 
@@ -45,6 +45,7 @@ def severance_html():
 <meta charset="utf-8">
 <title>{title}</title>
 <meta name="description" content="{desc}">
+{seo_meta("severance.html", title, desc, app_name="퇴직금 계산기")}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {FAVICON}
 <style>{SITE_STYLE}</style>

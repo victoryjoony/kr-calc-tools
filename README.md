@@ -1,21 +1,25 @@
 # 연봉 실수령액 계산기 (프로그래매틱 SEO 데모)
 
 ## 구조
-- `calc.py` — 4대보험/소득세 계산 로직 (요율은 2025년 예시값, 매년 갱신 필요)
-- `static_pages.py` — about/privacy/contact 페이지 (SITE_NAME, CONTACT_EMAIL 여기서 수정)
+- `calc.py` — 4대보험/소득세 계산 로직 (2026년 요율. 요율은 1월, 국민연금 상·하한은 7월에 갱신 —
+  `RATES_YEAR`, `PREVIOUS_YEAR_RATES`도 함께 바꿀 것. 실시간 계산기 JS 요율은 여기서 자동 주입됨)
+- `static_pages.py` — about/privacy/contact 페이지 + 공통 SEO 태그 `seo_meta()` (SITE_NAME, CONTACT_EMAIL 여기서 수정)
 - `generate.py` — 연봉 구간별 실수령액 페이지(프리셋) + 실시간 입력 계산기가 있는 index.html 생성
 - `income_percentile.py` — 연봉 순위(상위 몇 %) 추정 테이블. 국세청이 매년 12월 말 새 백분위 자료를
   공개하므로 그때 앵커 포인트(50/30/10/1%)를 갱신하고 나머지 구간을 재보간할 것
 - `generate_severance.py` — 퇴직금 계산기 (입사일·퇴사일 기반)
 - `generate_unemployment.py` — 실업급여(구직급여) 계산기 (2026년 상한액 68,100원/하한액 66,048원 기준, 매년 갱신 필요)
 - `dividend_data.py` / `generate_dividend.py` — 배당금 계산기 (7개 대형주 2025년 확정 DPS 기준, 결산 시즌마다 갱신 필요)
-- `build.py` — 위 모든 generate 스크립트 + sitemap.xml을 한 번에 빌드 (실제로는 이걸 실행)
+- `build.py` — 위 모든 generate 스크립트 + sitemap.xml·robots.txt·ads.txt·IndexNow 키 파일을 한 번에 빌드 (실제로는 이걸 실행).
+  sitemap의 lastmod는 `lastmod.json`(페이지 내용 해시)으로 실제 내용이 바뀐 페이지만 갱신됨 — 이 파일도 커밋할 것
+- `indexnow.py` — 배포 후 네이버·빙에 색인 요청 (구글은 서치콘솔에서 따로)
 - `docs/` — 생성된 정적 사이트 (GitHub Pages가 이 폴더를 그대로 서빙함)
 
 ## 로컬에서 다시 생성하기
 ```bash
 python build.py
 ```
+배포(push) 후 1~2분 기다렸다가 `python indexnow.py`로 네이버·빙에 변경 사항을 알림.
 `generate.py` 상단의 `START`/`END`/`STEP`을 바꾸면 연봉 페이지 개수가 조절됩니다
 (예: STEP을 100_000으로 줄이면 페이지가 8배로 늘어남).
 

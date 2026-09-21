@@ -1,11 +1,47 @@
 """
 애드센스 심사에 필요한 필수 정적 페이지 (개인정보처리방침 / 사이트소개 / 문의)
++ 모든 페이지 <head>에 공통으로 들어가는 SEO 태그(canonical, Open Graph, 구조화 데이터)
 """
+import html
+import json
 
 SITE_NAME = "연봉실수령액계산기"
 CONTACT_EMAIL = "contact@yourdomain.com"  # 실배포 전 실제 연락처 이메일로 교체하세요
+BASE_URL = "https://krcalctools.github.io"
 
 ADSENSE_CLIENT = "ca-pub-5607384951754093"
+
+
+def page_url(filename):
+    """홈은 /index.html 대신 루트 URL로 통일 (중복 URL 방지)"""
+    return f"{BASE_URL}/" if filename == "index.html" else f"{BASE_URL}/{filename}"
+
+
+def seo_meta(filename, title, desc, app_name=None):
+    """canonical + Open Graph(카톡·커뮤니티 링크 미리보기) 태그. app_name을 주면 계산기용 구조화 데이터도 추가"""
+    url = page_url(filename)
+    t, d = html.escape(title), html.escape(desc)
+    tags = f"""<link rel="canonical" href="{url}">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:site_name" content="{SITE_NAME}">
+<meta property="og:title" content="{t}">
+<meta property="og:description" content="{d}">
+<meta property="og:url" content="{url}">"""
+    if app_name:
+        ld = {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": app_name,
+            "url": url,
+            "description": desc,
+            "applicationCategory": "FinanceApplication",
+            "operatingSystem": "All",
+            "inLanguage": "ko",
+            "offers": {"@type": "Offer", "price": "0", "priceCurrency": "KRW"},
+        }
+        tags += f'\n<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>'
+    return tags
 
 GA_SNIPPET = f"""<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-HKGC6LX6C4"></script>
@@ -178,6 +214,8 @@ def about_html():
 {GA_SNIPPET}
 <meta charset="utf-8">
 <title>사이트 소개 - {SITE_NAME}</title>
+<meta name="description" content="{SITE_NAME}의 계산 방식과 기준을 안내합니다.">
+{seo_meta("about.html", f"사이트 소개 - {SITE_NAME}", f"{SITE_NAME}의 계산 방식과 기준을 안내합니다.")}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {FAVICON}
 <style>{SITE_STYLE}</style>
@@ -209,6 +247,7 @@ def privacy_html():
 {GA_SNIPPET}
 <meta charset="utf-8">
 <title>개인정보처리방침 - {SITE_NAME}</title>
+{seo_meta("privacy.html", f"개인정보처리방침 - {SITE_NAME}", f"{SITE_NAME} 개인정보처리방침")}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {FAVICON}
 <style>{SITE_STYLE}</style>
@@ -254,6 +293,7 @@ def contact_html():
 {GA_SNIPPET}
 <meta charset="utf-8">
 <title>문의 - {SITE_NAME}</title>
+{seo_meta("contact.html", f"문의 - {SITE_NAME}", f"{SITE_NAME} 문의")}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {FAVICON}
 <style>{SITE_STYLE}</style>

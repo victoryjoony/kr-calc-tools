@@ -6,7 +6,7 @@
 """
 import os
 import json
-from static_pages import SITE_NAME, GA_SNIPPET, FOOTER_NAV, SITE_STYLE, SITE_HEADER, FAVICON
+from static_pages import SITE_NAME, GA_SNIPPET, FOOTER_NAV, SITE_STYLE, SITE_HEADER, FAVICON, seo_meta
 from dividend_data import STOCKS, PRICE_DATE
 
 OUTPUT_DIR = "docs"
@@ -39,6 +39,7 @@ def dividend_html():
 <meta charset="utf-8">
 <title>{title}</title>
 <meta name="description" content="{desc}">
+{seo_meta("dividend.html", title, desc, app_name="배당금 계산기")}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {FAVICON}
 <style>{SITE_STYLE}</style>

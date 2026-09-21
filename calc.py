@@ -1,27 +1,40 @@
 """
-연봉 실수령액 계산 로직 (2025년 기준 근사치)
+연봉 실수령액 계산 로직 (2026년 기준 근사치)
 
-주의: 4대보험 요율/상한액은 매년(국민연금은 7월, 건강보험은 1월) 변경됩니다.
-실서비스 배포 전 아래 공식 출처에서 최신 수치로 반드시 교체하세요.
-- 국민연금 상한액: 국민연금공단 고시
-- 건강보험료율: 국민건강보험공단 고시
+주의: 4대보험 요율/상한액은 매년(국민연금 상·하한은 7월, 요율은 1월) 변경됩니다.
+갱신 시 아래 공식 출처에서 최신 수치를 확인하고 RATES_YEAR도 함께 바꿀 것.
+- 국민연금 요율/상·하한액: 국민연금공단 고시 (연금개혁으로 2026년부터 매년 0.5%p 인상, 2033년 13%까지)
+- 건강보험료율/장기요양보험료율: 보건복지부 보도자료 (매년 8~9월 다음 해 요율 결정)
 - 소득세: 국세청 근로소득 간이세액표 (여기서는 연간 산출식 기반 근사치 사용,
   1인 가구 기준으로 기본공제·연금보험료공제·특별소득공제(건강보험료)만 반영한
   단순화 모델. 부양가족, 카드사용액 등 그 외 소득/세액공제는 미반영이라
   실제 원천징수와는 여전히 오차가 있을 수 있음)
 """
 
-# ---- 4대보험 요율 (2025년 예시값, 매년 갱신 필요) ----
-PENSION_RATE = 0.045          # 국민연금 근로자 부담 4.5%
-PENSION_CAP_MONTHLY = 6_370_000   # 기준소득월액 상한
-PENSION_FLOOR_MONTHLY = 370_000   # 기준소득월액 하한
+RATES_YEAR = 2026  # 페이지 제목/안내문의 "OOOO년 기준" 표기에 사용
 
-HEALTH_RATE = 0.03545         # 건강보험 3.545%
-LONGTERM_CARE_RATE_OF_HEALTH = 0.1295  # 장기요양보험 = 건강보험료의 12.95%
+# ---- 4대보험 요율 (2026년, 매년 갱신 필요) ----
+PENSION_RATE = 0.0475         # 국민연금 근로자 부담 4.75% (총 9.5%, 2026.1~)
+PENSION_CAP_MONTHLY = 6_590_000   # 기준소득월액 상한 (2026.7~2027.6)
+PENSION_FLOOR_MONTHLY = 410_000   # 기준소득월액 하한 (2026.7~2027.6)
+
+HEALTH_RATE = 0.03595         # 건강보험 근로자 부담 3.595% (총 7.19%)
+LONGTERM_CARE_RATE_OF_HEALTH = 0.1314  # 장기요양보험 = 건강보험료의 13.14%
 
 EMPLOYMENT_RATE = 0.009       # 고용보험 근로자 부담 0.9%
 
-# ---- 근로소득공제 구간 ----
+# 직전 연도 요율 (홈페이지 "올해 달라진 요율" 비교표용). 요율 갱신 시 위의 현재 값을 여기로 옮길 것
+PREVIOUS_YEAR_RATES = {
+    "year": 2025,
+    "pension": 0.045,
+    "health": 0.03545,
+    "longterm_care_of_health": 0.1295,
+    "employment": 0.009,
+}
+
+# ---- 근로소득공제 구간 (소득세법 제47조, 한도 2,000만원) ----
+EARNED_INCOME_DEDUCTION_CAP = 20_000_000
+
 def earned_income_deduction(gross_annual):
     g = gross_annual
     if g <= 5_000_000:
@@ -32,7 +45,7 @@ def earned_income_deduction(gross_annual):
         return 7_500_000 + (g - 15_000_000) * 0.15
     if g <= 100_000_000:
         return 12_000_000 + (g - 45_000_000) * 0.05
-    return 14_750_000 + (g - 100_000_000) * 0.02
+    return min(14_750_000 + (g - 100_000_000) * 0.02, EARNED_INCOME_DEDUCTION_CAP)
 
 # ---- 종합소득세 누진세율표 (과세표준, 세율, 누진공제) ----
 TAX_BRACKETS = [
@@ -55,7 +68,7 @@ def calc_tax_by_bracket(base):
     return 0
 
 def earned_income_tax_credit(calculated_tax, gross_annual):
-    # 근로소득세액공제 (단순화)
+    # 근로소득세액공제 (소득세법 제59조)
     if calculated_tax <= 1_300_000:
         credit = calculated_tax * 0.55
     else:
@@ -65,8 +78,10 @@ def earned_income_tax_credit(calculated_tax, gross_annual):
         cap = 740_000
     elif gross_annual <= 70_000_000:
         cap = max(660_000, 740_000 - (gross_annual - 33_000_000) * 0.008)
-    else:
+    elif gross_annual <= 120_000_000:
         cap = max(500_000, 660_000 - (gross_annual - 70_000_000) * 0.5)
+    else:
+        cap = max(200_000, 500_000 - (gross_annual - 120_000_000) * 0.5)
 
     return min(credit, cap)
 

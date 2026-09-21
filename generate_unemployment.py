@@ -5,7 +5,7 @@
 총 수급액 = 1일 구직급여액 × 소정급여일수(가입기간·연령별, 고용보험법 별표1)
 """
 import os
-from static_pages import SITE_NAME, GA_SNIPPET, FOOTER_NAV, SITE_STYLE, SITE_HEADER, FAVICON
+from static_pages import SITE_NAME, GA_SNIPPET, FOOTER_NAV, SITE_STYLE, SITE_HEADER, FAVICON, seo_meta
 from generate_severance import date_select_row
 
 OUTPUT_DIR = "docs"
@@ -25,6 +25,7 @@ def unemployment_html():
 <meta charset="utf-8">
 <title>{title}</title>
 <meta name="description" content="{desc}">
+{seo_meta("unemployment.html", title, desc, app_name="실업급여 계산기")}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {FAVICON}
 <style>{SITE_STYLE}</style>
