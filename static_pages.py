@@ -1,12 +1,12 @@
 """
-애드센스 심사에 필요한 필수 정적 페이지 (개인정보처리방침 / 사이트소개 / 문의)
+애드센스 심사에 필요한 필수 정적 페이지 (개인정보처리방침 / 사이트소개)
+(문의 페이지는 개인 연락처 노출을 피하려고 2026-09-22 제거함)
 + 모든 페이지 <head>에 공통으로 들어가는 SEO 태그(canonical, Open Graph, 구조화 데이터)
 """
 import html
 import json
 
 SITE_NAME = "연봉실수령액계산기"
-CONTACT_EMAIL = "contact@yourdomain.com"  # 실배포 전 실제 연락처 이메일로 교체하세요
 BASE_URL = "https://krcalctools.github.io"
 
 ADSENSE_CLIENT = "ca-pub-5607384951754093"
@@ -58,12 +58,12 @@ GA_SNIPPET = f"""<!-- Google tag (gtag.js) -->
 FOOTER_NAV = """
   <div class="footer-nav">
     <a href="index.html">연봉 실수령액</a>
+    <a href="salary-table.html">연봉 실수령액표</a>
     <a href="severance.html">퇴직금 계산기</a>
     <a href="unemployment.html">실업급여 계산기</a>
     <a href="dividend.html">배당금 계산기</a>
     <a href="about.html">사이트 소개</a>
     <a href="privacy.html">개인정보처리방침</a>
-    <a href="contact.html">문의</a>
   </div>
 """
 
@@ -74,6 +74,7 @@ SITE_HEADER = """
     <a href="index.html" class="brand">🧮 머니계산기</a>
     <nav class="site-nav">
       <a href="index.html">연봉</a>
+      <a href="salary-table.html">실수령액표</a>
       <a href="severance.html">퇴직금</a>
       <a href="unemployment.html">실업급여</a>
       <a href="dividend.html">배당금</a>
@@ -170,6 +171,11 @@ SITE_STYLE = """
   table.rule th, table.rule td, table th, table td { border: 1px solid var(--border); padding: 9px 10px; text-align: left; }
   table.rule td.num, table td.num { text-align: right; }
   th { color: var(--muted); font-weight: 600; background: #fafafa; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.compact { font-size: 12px; }
+  table.compact th, table.compact td { padding: 7px 6px; }
+  table.compact td { white-space: nowrap; }
+  @media (max-width: 400px) { .site-nav a { padding: 6px 7px; } }
 
   .pending { color: #b45309; font-size: 12px; }
   .warning { margin-top: 12px; padding: 10px 12px; background: var(--warn-bg); border-radius: 10px; font-size: 13px; color: var(--warn-text); display: none; }
@@ -274,35 +280,8 @@ def privacy_html():
   <p>본 사이트는 Google AdSense를 통해 광고를 게재하며, Google은 이용자의 관심사에 기반한 광고를
   제공하기 위해 쿠키를 사용할 수 있습니다. 자세한 내용은 Google의 광고 정책을 참고하시기 바랍니다.</p>
 
-  <h2>4. 문의</h2>
-  <p>개인정보처리방침 관련 문의는 <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a>로 연락
-  주시기 바랍니다.</p>
-
-  <h2>5. 시행일</h2>
-  <p>본 방침은 2026년 8월 22일부터 적용됩니다.</p>
-
-{FOOTER_NAV}
-</body>
-</html>"""
-
-
-def contact_html():
-    return f"""<!doctype html>
-<html lang="ko">
-<head>
-{GA_SNIPPET}
-<meta charset="utf-8">
-<title>문의 - {SITE_NAME}</title>
-{seo_meta("contact.html", f"문의 - {SITE_NAME}", f"{SITE_NAME} 문의")}
-<meta name="viewport" content="width=device-width, initial-scale=1">
-{FAVICON}
-<style>{SITE_STYLE}</style>
-</head>
-<body>
-{SITE_HEADER}
-  <h1>문의</h1>
-  <p>사이트 이용 중 궁금한 점, 오류 제보, 광고/제휴 문의는 아래 이메일로 연락 주시기 바랍니다.</p>
-  <p><a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a></p>
+  <h2>4. 시행일</h2>
+  <p>본 방침은 2026년 9월 22일부터 적용됩니다.</p>
 
 {FOOTER_NAV}
 </body>

@@ -10,13 +10,13 @@ import json
 import calc
 from calc import calculate, RATES_YEAR
 from income_percentile import estimate_top_percent, PERCENTILE_TABLE, SOURCE_NOTE as PERCENTILE_SOURCE_NOTE
-from static_pages import about_html, privacy_html, contact_html, SITE_NAME, GA_SNIPPET, FOOTER_NAV, SITE_STYLE, SITE_HEADER, FAVICON, BASE_URL, seo_meta
+from static_pages import about_html, privacy_html, SITE_NAME, GA_SNIPPET, FOOTER_NAV, SITE_STYLE, SITE_HEADER, FAVICON, BASE_URL, seo_meta
 
 PERCENTILE_TABLE_JS = f"const PERCENTILE_TABLE = {json.dumps(PERCENTILE_TABLE)};\n"
 
 OUTPUT_DIR = "docs"  # GitHub Pages가 /docs 폴더를 바로 서빙할 수 있어서 이 이름 사용
 
-START_LOW = 30_000_000     # 3,000만원
+START_LOW = 20_000_000     # 2,000만원 (최저임금 연봉 약 2,588만원 전후의 신입·중소기업 구간 포함)
 BOUNDARY = 100_000_000     # 1억원 - 이 지점부터 STEP_HIGH로 전환
 END = 150_000_000          # 1억 5,000만원
 STEP_LOW = 1_000_000       # 1억 미만: 100만원 단위 (실제 검색 패턴에 맞춤)
@@ -91,8 +91,34 @@ function calculateSalary(annual) {
   return { pension, health, ltc, employment, incomeTax, localTax, netMonthly, totalDeduction, monthly };
 }
 
-function calc() {
-  const manInput = parseFloat(document.getElementById('annual').value) || 0;
+// 원 단위로 잘못 입력한 값(예: 42000000)은 만원 단위로 보정
+function normalizeMan(raw, wonThreshold) {
+  const v = parseFloat(raw) || 0;
+  return v >= wonThreshold ? { man: v / 10000, converted: true } : { man: v, converted: false };
+}
+
+function showUnitNote(converted, man) {
+  const note = document.getElementById('unitNote');
+  note.style.display = converted ? 'block' : 'none';
+  if (converted) note.textContent = '원 단위로 입력하신 것 같아 ' + man.toLocaleString() + '만원으로 계산했어요.';
+}
+
+function onAnnualInput() {
+  const { man, converted } = normalizeMan(document.getElementById('annual').value, 100000);
+  document.getElementById('monthly').value = man > 0 ? Math.round(man / 12) : '';
+  showUnitNote(converted, man);
+  calc(man);
+}
+
+function onMonthlyInput() {
+  const { man, converted } = normalizeMan(document.getElementById('monthly').value, 10000);
+  const annualMan = Math.round(man * 12);
+  document.getElementById('annual').value = annualMan > 0 ? annualMan : '';
+  showUnitNote(converted, man);
+  calc(annualMan);
+}
+
+function calc(manInput) {
   const annual = manInput * 10000;
   if (annual <= 0) return;
   const r = calculateSalary(annual);
@@ -165,6 +191,13 @@ def search_label(salary_won):
     return f"{eok}억{man}"
 
 
+def monthly_label(salary_won):
+    """세전 월급이 10만원 단위로 딱 떨어질 때만 '월급 300만원' 형태 반환 ('월급 300 실수령액' 검색 대응)"""
+    if salary_won % 1_200_000 != 0:
+        return None
+    return f"월급 {salary_won // 12 // 10_000:,}만원"
+
+
 def pct(rate):
     """0.0475 -> '4.75' (부동소수점 꼬리 제거)"""
     return f"{rate * 100:g}"
@@ -182,8 +215,11 @@ def page_html(salary, prev_salary, next_salary):
     top_pct = estimate_top_percent(man)
     net_pct = round(r['net_monthly'] / r['gross_monthly'] * 100, 1)
     monthly_man = round(salary / 12 / 10_000)
-    title = f"연봉 {search_label(salary)} 실수령액 - 월 {fmt(r['net_monthly'])}원 ({RATES_YEAR}년 기준)"
-    desc = f"{RATES_YEAR}년 4대보험 요율 기준, 연봉 {label}의 세후 실수령액은 월 약 {fmt(r['net_monthly'])}원입니다. 4대보험, 소득세 공제 내역과 소득 순위를 확인하세요."
+    ml = monthly_label(salary)
+    title_suffix = f" ({ml})" if ml else ""
+    label_with_monthly = f"{label}(세전 {ml})" if ml else label
+    title = f"연봉 {search_label(salary)} 실수령액{title_suffix} - 월 {fmt(r['net_monthly'])}원 ({RATES_YEAR}년 기준)"
+    desc = f"{RATES_YEAR}년 4대보험 요율 기준, 연봉 {label_with_monthly}의 세후 실수령액은 월 약 {fmt(r['net_monthly'])}원입니다. 4대보험, 소득세 공제 내역과 소득 순위를 확인하세요."
 
     nav_links = []
     if prev_salary:
@@ -206,7 +242,7 @@ def page_html(salary, prev_salary, next_salary):
 </head>
 <body>
 {SITE_HEADER}
-  <h1>연봉 {label} 실수령액 계산 결과</h1>
+  <h1>연봉 {label_with_monthly} 실수령액 계산 결과</h1>
   <div class="headline">
     <div>세전 연봉 {label}의 월 실수령액</div>
     <div class="amount">{fmt(r['net_monthly'])}원</div>
@@ -292,6 +328,67 @@ def page_html(salary, prev_salary, next_salary):
 </html>"""
 
 
+def table_page_html(salaries):
+    """연봉 실수령액표 한 페이지 ('연봉 실수령액표' 검색 대응 + 모든 연봉 페이지로 가는 내부 링크 허브)"""
+    rows = []
+    for s in salaries:
+        r = calculate(s)
+        rows.append(
+            f'  <tr><td><a href="{slug(s)}.html">{fmt_eok(s)}</a></td>'
+            f'<td class="num">{fmt(r["gross_monthly"])}</td>'
+            f'<td class="num">{fmt(r["total_deduction"])}</td>'
+            f'<td class="num"><b>{fmt(r["net_monthly"])}</b></td></tr>'
+        )
+    min_wage_monthly = calc.MINIMUM_WAGE_HOURLY * calc.MINIMUM_WAGE_MONTHLY_HOURS
+    mw = calculate(min_wage_monthly * 12)
+    first, last = fmt_eok(salaries[0]), fmt_eok(salaries[-1])
+    title = f"{RATES_YEAR} 연봉 실수령액표 - {first}~{last} 월급 한눈에 보기"
+    desc = (f"{RATES_YEAR}년 4대보험 요율 기준 연봉별 월 실수령액표. 연봉 {first}부터 {last}까지 "
+            f"4대보험·소득세 공제 후 월급을 한 표로 정리했습니다. 최저임금 월급 실수령액 포함.")
+
+    return f"""<!doctype html>
+<html lang="ko">
+<head>
+{GA_SNIPPET}
+<meta charset="utf-8">
+<title>{title}</title>
+<meta name="description" content="{desc}">
+{seo_meta("salary-table.html", title, desc)}
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{FAVICON}
+<style>{SITE_STYLE}</style>
+</head>
+<body>
+{SITE_HEADER}
+  <h1>{RATES_YEAR} 연봉 실수령액표</h1>
+  <p>{RATES_YEAR}년 4대보험 요율(국민연금 {pct(calc.PENSION_RATE)}%, 건강보험 {pct(calc.HEALTH_RATE)}%)과 소득세를 반영한
+  연봉별 월 실수령액입니다. 연봉을 누르면 공제 항목별 상세 계산 과정을 볼 수 있어요.</p>
+
+  <div class="percentile-badge">
+    💡 {RATES_YEAR}년 최저임금(시급 {fmt(calc.MINIMUM_WAGE_HOURLY)}원) 기준 월급은 <b>{fmt(min_wage_monthly)}원</b>
+    (월 {calc.MINIMUM_WAGE_MONTHLY_HOURS}시간, 주휴수당 포함)이고, 4대보험·세금을 떼면 월 실수령액은 약 <b>{fmt(mw['net_monthly'])}원</b>입니다.
+  </div>
+
+  <p><a href="index.html"><b>👉 내 연봉 정확히 계산하기</b></a> (표에 없는 금액도 바로 계산)</p>
+
+  <div class="table-wrap">
+  <table class="compact">
+  <tr><th>연봉(세전)</th><th>월급(세전, 원)</th><th>공제 합계(원)</th><th>월 실수령액(원)</th></tr>
+{chr(10).join(rows)}
+  </table>
+  </div>
+
+  <div class="disclaimer">
+    ※ 1인 가구, 비과세 수당 0원 기준 추정치입니다. 식대 등 비과세 수당이 있거나 부양가족이 있으면 실제 실수령액은
+    이 표보다 늘어납니다. 4대보험 요율은 {RATES_YEAR}년 기준(국민연금 상·하한은 {RATES_YEAR}년 7월 적용분)이며,
+    정확한 금액은 국세청 홈택스 원천징수세액 조회를 참고하세요.
+  </div>
+
+{FOOTER_NAV}
+</body>
+</html>"""
+
+
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     salaries = build_salaries()
@@ -311,10 +408,14 @@ def main():
             f.write(html)
 
     # 필수 정적 페이지 (애드센스 심사용)
-    static_files = {"about.html": about_html(), "privacy.html": privacy_html(), "contact.html": contact_html()}
+    static_files = {"about.html": about_html(), "privacy.html": privacy_html()}
     for filename, html in static_files.items():
         with open(os.path.join(OUTPUT_DIR, filename), "w", encoding="utf-8") as f:
             f.write(html)
+
+    # 연봉 실수령액표 (전체 구간 한 페이지)
+    with open(os.path.join(OUTPUT_DIR, "salary-table.html"), "w", encoding="utf-8") as f:
+        f.write(table_page_html(salaries))
 
     # index.html - 전체 목록
     links = "\n".join(
@@ -353,8 +454,13 @@ def main():
 <div class="calc-box">
   <div class="field">
     <label for="annual">연봉 (세전, 만원)</label>
-    <input type="number" id="annual" placeholder="예: 3637" oninput="calc()">
+    <input type="number" id="annual" placeholder="예: 3637" oninput="onAnnualInput()">
   </div>
+  <div class="field">
+    <label for="monthly">또는 월급 (세전, 만원)</label>
+    <input type="number" id="monthly" placeholder="예: 300" oninput="onMonthlyInput()">
+  </div>
+  <div class="warning" id="unitNote"></div>
   <div class="result">
     <div class="result-row"><span>국민연금</span><span id="pension">-</span></div>
     <div class="result-row"><span>건강보험</span><span id="health">-</span></div>
@@ -386,6 +492,7 @@ def main():
   </div>
 </div>
 
+<p><a href="salary-table.html"><b>📊 {RATES_YEAR} 연봉 실수령액표 한눈에 보기</b></a></p>
 <p><a href="severance.html"><b>퇴직금 계산기</b></a> | <a href="unemployment.html"><b>실업급여 계산기</b></a> | <a href="dividend.html"><b>배당금 계산기</b></a></p>
 
 <h2>{RATES_YEAR}년 달라진 4대보험 요율 (근로자 부담분)</h2>

@@ -113,6 +113,11 @@
   table.rule th, table.rule td, table th, table td { border: 1px solid var(--border); padding: 9px 10px; text-align: left; }
   table.rule td.num, table td.num { text-align: right; }
   th { color: var(--muted); font-weight: 600; background: #fafafa; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.compact { font-size: 12px; }
+  table.compact th, table.compact td { padding: 7px 6px; }
+  table.compact td { white-space: nowrap; }
+  @media (max-width: 400px) { .site-nav a { padding: 6px 7px; } }
 
   .pending { color: #b45309; font-size: 12px; }
   .warning { margin-top: 12px; padding: 10px 12px; background: var(--warn-bg); border-radius: 10px; font-size: 13px; color: var(--warn-text); display: none; }
@@ -155,6 +160,7 @@
     <a href="index.html" class="brand">🧮 머니계산기</a>
     <nav class="site-nav">
       <a href="index.html">연봉</a>
+      <a href="salary-table.html">실수령액표</a>
       <a href="severance.html">퇴직금</a>
       <a href="unemployment.html">실업급여</a>
       <a href="dividend.html">배당금</a>
@@ -177,12 +183,12 @@
 
   <div class="footer-nav">
     <a href="index.html">연봉 실수령액</a>
+    <a href="salary-table.html">연봉 실수령액표</a>
     <a href="severance.html">퇴직금 계산기</a>
     <a href="unemployment.html">실업급여 계산기</a>
     <a href="dividend.html">배당금 계산기</a>
     <a href="about.html">사이트 소개</a>
     <a href="privacy.html">개인정보처리방침</a>
-    <a href="contact.html">문의</a>
   </div>
 
 </body>

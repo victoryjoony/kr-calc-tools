@@ -3,8 +3,10 @@
 ## 구조
 - `calc.py` — 4대보험/소득세 계산 로직 (2026년 요율. 요율은 1월, 국민연금 상·하한은 7월에 갱신 —
   `RATES_YEAR`, `PREVIOUS_YEAR_RATES`도 함께 바꿀 것. 실시간 계산기 JS 요율은 여기서 자동 주입됨)
-- `static_pages.py` — about/privacy/contact 페이지 + 공통 SEO 태그 `seo_meta()` (SITE_NAME, CONTACT_EMAIL 여기서 수정)
-- `generate.py` — 연봉 구간별 실수령액 페이지(프리셋) + 실시간 입력 계산기가 있는 index.html 생성
+- `static_pages.py` — about/privacy 페이지 + 공통 헤더·푸터·SEO 태그 `seo_meta()` (SITE_NAME, BASE_URL 여기서 수정).
+  문의(contact) 페이지는 개인 연락처 노출을 피하려고 2026-09-22 제거함
+- `generate.py` — 연봉 구간별 실수령액 페이지(프리셋) + 실시간 입력 계산기(연봉·월급 입력)가 있는 index.html
+  + 전체 구간 연봉 실수령액표(salary-table.html) 생성
 - `income_percentile.py` — 연봉 순위(상위 몇 %) 추정 테이블. 국세청이 매년 12월 말 새 백분위 자료를
   공개하므로 그때 앵커 포인트(50/30/10/1%)를 갱신하고 나머지 구간을 재보간할 것
 - `generate_severance.py` — 퇴직금 계산기 (입사일·퇴사일 기반)
@@ -35,10 +37,9 @@ python build.py
 계산되도록 설계되어 있음 — 이 방식을 유지할 것 (특정 시점 주가를 하드코딩하면 곧 부정확해짐).
 
 ## 배포 전 반드시 할 일
-1. `generate.py`의 `BASE_URL`을 실제 구매한 도메인으로 교체
-2. `static_pages.py`의 `CONTACT_EMAIL`을 실제 연락처로 교체
-3. `calc.py`의 4대보험 요율/상한액을 최신 공식 고시 수치로 검증
-4. 도메인 구매 (가비아, 카페24, Namecheap 등 — 연 1~2만원대)
+1. `static_pages.py`의 `BASE_URL`을 실제 구매한 도메인으로 교체
+2. `calc.py`의 4대보험 요율/상한액을 최신 공식 고시 수치로 검증
+3. 도메인 구매 (가비아, 카페24, Namecheap 등 — 연 1~2만원대)
 
 ## 배포 방법 (GitHub Pages, 무료 · Node.js 불필요)
 GitHub 계정 생성/로그인, 저장소 생성은 본인이 직접 해야 합니다 (브라우저 인증 필요).
@@ -73,6 +74,6 @@ GitHub 계정 생성/로그인, 저장소 생성은 본인이 직접 해야 합�
 ## 애드센스 신청 전 체크리스트
 - [ ] 실제 도메인 연결 완료
 - [ ] 검색엔진에 색인 시작 (제출 후 1~2주 소요)
-- [ ] privacy/about/contact 페이지 정상 작동 확인
+- [ ] privacy/about 페이지 정상 작동 확인
 - [ ] 최소 2~4주 실 방문자 데이터 축적 권장
 - [ ] https://www.google.com/adsense 에서 사이트 등록 후 심사 신청

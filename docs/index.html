@@ -114,6 +114,11 @@
   table.rule th, table.rule td, table th, table td { border: 1px solid var(--border); padding: 9px 10px; text-align: left; }
   table.rule td.num, table td.num { text-align: right; }
   th { color: var(--muted); font-weight: 600; background: #fafafa; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.compact { font-size: 12px; }
+  table.compact th, table.compact td { padding: 7px 6px; }
+  table.compact td { white-space: nowrap; }
+  @media (max-width: 400px) { .site-nav a { padding: 6px 7px; } }
 
   .pending { color: #b45309; font-size: 12px; }
   .warning { margin-top: 12px; padding: 10px 12px; background: var(--warn-bg); border-radius: 10px; font-size: 13px; color: var(--warn-text); display: none; }
@@ -155,6 +160,7 @@
     <a href="index.html" class="brand">🧮 머니계산기</a>
     <nav class="site-nav">
       <a href="index.html">연봉</a>
+      <a href="salary-table.html">실수령액표</a>
       <a href="severance.html">퇴직금</a>
       <a href="unemployment.html">실업급여</a>
       <a href="dividend.html">배당금</a>
@@ -167,8 +173,13 @@
 <div class="calc-box">
   <div class="field">
     <label for="annual">연봉 (세전, 만원)</label>
-    <input type="number" id="annual" placeholder="예: 3637" oninput="calc()">
+    <input type="number" id="annual" placeholder="예: 3637" oninput="onAnnualInput()">
   </div>
+  <div class="field">
+    <label for="monthly">또는 월급 (세전, 만원)</label>
+    <input type="number" id="monthly" placeholder="예: 300" oninput="onMonthlyInput()">
+  </div>
+  <div class="warning" id="unitNote"></div>
   <div class="result">
     <div class="result-row"><span>국민연금</span><span id="pension">-</span></div>
     <div class="result-row"><span>건강보험</span><span id="health">-</span></div>
@@ -200,6 +211,7 @@
   </div>
 </div>
 
+<p><a href="salary-table.html"><b>📊 2026 연봉 실수령액표 한눈에 보기</b></a></p>
 <p><a href="severance.html"><b>퇴직금 계산기</b></a> | <a href="unemployment.html"><b>실업급여 계산기</b></a> | <a href="dividend.html"><b>배당금 계산기</b></a></p>
 
 <h2>2026년 달라진 4대보험 요율 (근로자 부담분)</h2>
@@ -216,8 +228,18 @@
 <a href="https://www.mohw.go.kr/board.es?act=view&amp;bid=0027&amp;list_no=1487817&amp;mid=a10503000000" target="_blank" rel="noopener">보건복지부 2026년 장기요양보험료율</a>,
 <a href="https://www.nps.or.kr/pnsinfo/ntpsklg/getOHAF0038M0.do" target="_blank" rel="noopener">국민연금공단 연금보험료 안내</a></p>
 
-<h2>연봉 구간별 상세 계산 결과 (76개)</h2>
-<ul><li><a href="salary-3000.html">연봉 3,000만원 실수령액</a></li>
+<h2>연봉 구간별 상세 계산 결과 (86개)</h2>
+<ul><li><a href="salary-2000.html">연봉 2,000만원 실수령액</a></li>
+<li><a href="salary-2100.html">연봉 2,100만원 실수령액</a></li>
+<li><a href="salary-2200.html">연봉 2,200만원 실수령액</a></li>
+<li><a href="salary-2300.html">연봉 2,300만원 실수령액</a></li>
+<li><a href="salary-2400.html">연봉 2,400만원 실수령액</a></li>
+<li><a href="salary-2500.html">연봉 2,500만원 실수령액</a></li>
+<li><a href="salary-2600.html">연봉 2,600만원 실수령액</a></li>
+<li><a href="salary-2700.html">연봉 2,700만원 실수령액</a></li>
+<li><a href="salary-2800.html">연봉 2,800만원 실수령액</a></li>
+<li><a href="salary-2900.html">연봉 2,900만원 실수령액</a></li>
+<li><a href="salary-3000.html">연봉 3,000만원 실수령액</a></li>
 <li><a href="salary-3100.html">연봉 3,100만원 실수령액</a></li>
 <li><a href="salary-3200.html">연봉 3,200만원 실수령액</a></li>
 <li><a href="salary-3300.html">연봉 3,300만원 실수령액</a></li>
@@ -296,12 +318,12 @@
 
   <div class="footer-nav">
     <a href="index.html">연봉 실수령액</a>
+    <a href="salary-table.html">연봉 실수령액표</a>
     <a href="severance.html">퇴직금 계산기</a>
     <a href="unemployment.html">실업급여 계산기</a>
     <a href="dividend.html">배당금 계산기</a>
     <a href="about.html">사이트 소개</a>
     <a href="privacy.html">개인정보처리방침</a>
-    <a href="contact.html">문의</a>
   </div>
 
 <script>
@@ -368,8 +390,34 @@ function calculateSalary(annual) {
   return { pension, health, ltc, employment, incomeTax, localTax, netMonthly, totalDeduction, monthly };
 }
 
-function calc() {
-  const manInput = parseFloat(document.getElementById('annual').value) || 0;
+// 원 단위로 잘못 입력한 값(예: 42000000)은 만원 단위로 보정
+function normalizeMan(raw, wonThreshold) {
+  const v = parseFloat(raw) || 0;
+  return v >= wonThreshold ? { man: v / 10000, converted: true } : { man: v, converted: false };
+}
+
+function showUnitNote(converted, man) {
+  const note = document.getElementById('unitNote');
+  note.style.display = converted ? 'block' : 'none';
+  if (converted) note.textContent = '원 단위로 입력하신 것 같아 ' + man.toLocaleString() + '만원으로 계산했어요.';
+}
+
+function onAnnualInput() {
+  const { man, converted } = normalizeMan(document.getElementById('annual').value, 100000);
+  document.getElementById('monthly').value = man > 0 ? Math.round(man / 12) : '';
+  showUnitNote(converted, man);
+  calc(man);
+}
+
+function onMonthlyInput() {
+  const { man, converted } = normalizeMan(document.getElementById('monthly').value, 10000);
+  const annualMan = Math.round(man * 12);
+  document.getElementById('annual').value = annualMan > 0 ? annualMan : '';
+  showUnitNote(converted, man);
+  calc(annualMan);
+}
+
+function calc(manInput) {
   const annual = manInput * 10000;
   if (annual <= 0) return;
   const r = calculateSalary(annual);
