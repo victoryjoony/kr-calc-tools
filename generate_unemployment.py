@@ -6,7 +6,7 @@
 """
 import os
 from static_pages import SITE_NAME, GA_SNIPPET, FOOTER_NAV, SITE_STYLE, SITE_HEADER, FAVICON, seo_meta
-from generate_severance import date_select_row
+from generate_severance import date_select_row, SERVICE_SPAN_JS
 
 OUTPUT_DIR = "docs"
 
@@ -100,13 +100,7 @@ def unemployment_html():
     return senior ? 270 : 240;
   }}
 
-  function readDateSelect(prefix) {{
-    const y = document.getElementById(prefix + 'Year').value;
-    const m = document.getElementById(prefix + 'Month').value;
-    const d = document.getElementById(prefix + 'Day').value;
-    if (!y || !m || !d) return null;
-    return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-  }}
+{SERVICE_SPAN_JS}
 
   function calc() {{
     const monthly = parseFloat(document.getElementById('monthly').value) || 0;
@@ -115,13 +109,12 @@ def unemployment_html():
     const senior = document.getElementById('senior').checked;
     if (!start || !end || monthly <= 0) return;
 
-    const days = Math.round((end - start) / (1000 * 60 * 60 * 24));
-    if (days <= 0) return;
+    const span = serviceSpan(start, end);
+    if (span.totalDays <= 0) return;
+    document.getElementById('period').textContent =
+      span.years + '년 ' + span.remDays + '일 (총 ' + span.totalDays.toLocaleString() + '일)';
 
-    const years = days / 365;
-    document.getElementById('period').textContent = years.toFixed(1) + '년 (총 ' + days.toLocaleString() + '일)';
-
-    const benefitDayCount = benefitDays(years, senior);
+    const benefitDayCount = benefitDays(span.years, senior);
     document.getElementById('days').textContent = benefitDayCount + '일';
 
     const avgDailyWage = monthly * 3 / 90 * 10000;

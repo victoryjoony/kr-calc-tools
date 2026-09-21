@@ -9,7 +9,9 @@
   + 전체 구간 연봉 실수령액표(salary-table.html) 생성
 - `income_percentile.py` — 연봉 순위(상위 몇 %) 추정 테이블. 국세청이 매년 12월 말 새 백분위 자료를
   공개하므로 그때 앵커 포인트(50/30/10/1%)를 갱신하고 나머지 구간을 재보간할 것
-- `generate_severance.py` — 퇴직금 계산기 (입사일·퇴사일 기반)
+- `generate_severance.py` — 퇴직금 계산기 (입사일·마지막 근무일 기반) + 퇴직소득세·세후 실수령액.
+  세금 공식은 `calc.retirement_income_tax`와 같음 (`python calc.py`로 국세청 예시 일치 확인).
+  재직기간 계산(`SERVICE_SPAN_JS`, 마지막 근무일 포함)은 실업급여 계산기도 같이 씀
 - `generate_unemployment.py` — 실업급여(구직급여) 계산기 (2026년 상한액 68,100원/하한액 66,048원 기준, 매년 갱신 필요)
 - `dividend_data.py` / `generate_dividend.py` — 배당금 계산기 (7개 대형주 2025년 확정 DPS 기준, 결산 시즌마다 갱신 필요)
 - `build.py` — 위 모든 generate 스크립트 + sitemap.xml·robots.txt·ads.txt·IndexNow 키 파일을 한 번에 빌드 (실제로는 이걸 실행).

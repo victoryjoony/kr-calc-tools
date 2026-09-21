@@ -456,13 +456,26 @@
     return senior ? 270 : 240;
   }
 
-  function readDateSelect(prefix) {
-    const y = document.getElementById(prefix + 'Year').value;
-    const m = document.getElementById(prefix + 'Month').value;
-    const d = document.getElementById(prefix + 'Day').value;
-    if (!y || !m || !d) return null;
-    return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-  }
+
+function readDateSelect(prefix) {
+  const y = document.getElementById(prefix + 'Year').value;
+  const m = document.getElementById(prefix + 'Month').value;
+  const d = document.getElementById(prefix + 'Day').value;
+  if (!y || !m || !d) return null;
+  return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+}
+
+// 시작일~마지막 근무일(포함) → 만 연수, 남은 일수, 총 일수 (딱 1년 근무 = 1년 0일)
+function serviceSpan(start, lastDay) {
+  const endEx = new Date(lastDay.getFullYear(), lastDay.getMonth(), lastDay.getDate() + 1);
+  const totalDays = Math.round((endEx - start) / 86400000);
+  const anniversary = (n) => new Date(start.getFullYear() + n, start.getMonth(), start.getDate());
+  let years = endEx.getFullYear() - start.getFullYear();
+  if (anniversary(years) > endEx) years -= 1;
+  const remDays = Math.round((endEx - anniversary(years)) / 86400000);
+  return { years, remDays, totalDays };
+}
+
 
   function calc() {
     const monthly = parseFloat(document.getElementById('monthly').value) || 0;
@@ -471,13 +484,12 @@
     const senior = document.getElementById('senior').checked;
     if (!start || !end || monthly <= 0) return;
 
-    const days = Math.round((end - start) / (1000 * 60 * 60 * 24));
-    if (days <= 0) return;
+    const span = serviceSpan(start, end);
+    if (span.totalDays <= 0) return;
+    document.getElementById('period').textContent =
+      span.years + '년 ' + span.remDays + '일 (총 ' + span.totalDays.toLocaleString() + '일)';
 
-    const years = days / 365;
-    document.getElementById('period').textContent = years.toFixed(1) + '년 (총 ' + days.toLocaleString() + '일)';
-
-    const benefitDayCount = benefitDays(years, senior);
+    const benefitDayCount = benefitDays(span.years, senior);
     document.getElementById('days').textContent = benefitDayCount + '일';
 
     const avgDailyWage = monthly * 3 / 90 * 10000;

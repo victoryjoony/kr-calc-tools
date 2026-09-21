@@ -71,6 +71,54 @@ def calc_tax_by_bracket(base):
             return base * rate - deduction
     return 0
 
+# ---- 퇴직소득세 (소득세법 제48조·제55조, 국세청 "퇴직소득세 계산방법") ----
+def service_years_deduction(years):
+    """근속연수공제"""
+    if years <= 5:
+        return 1_000_000 * years
+    if years <= 10:
+        return 5_000_000 + 2_000_000 * (years - 5)
+    if years <= 20:
+        return 15_000_000 + 2_500_000 * (years - 10)
+    return 40_000_000 + 3_000_000 * (years - 20)
+
+
+def converted_pay_deduction(converted):
+    """환산급여공제"""
+    c = converted
+    if c <= 8_000_000:
+        return c
+    if c <= 70_000_000:
+        return 8_000_000 + (c - 8_000_000) * 0.6
+    if c <= 100_000_000:
+        return 45_200_000 + (c - 70_000_000) * 0.55
+    if c <= 300_000_000:
+        return 61_700_000 + (c - 100_000_000) * 0.45
+    return 151_700_000 + (c - 300_000_000) * 0.35
+
+
+def retirement_income_tax(pay, tax_years):
+    """퇴직금(원)과 세법상 근속연수(1년 미만 단수는 1년으로 올림)로 퇴직소득세 계산.
+    국세청 예시(퇴직급여 1억원, 근속 20년 -> 산출세액 1,120,000원)와 일치하는지 __main__에서 확인."""
+    years_ded = min(service_years_deduction(tax_years), pay)   # 공제는 퇴직소득금액 한도
+    converted = (pay - years_ded) * 12 / tax_years               # 환산급여
+    converted_ded = converted_pay_deduction(converted)
+    base = max(converted - converted_ded, 0)                     # 과세표준
+    converted_tax = calc_tax_by_bracket(base)                    # 환산산출세액
+    income_tax = round(converted_tax * tax_years / 12) // 10 * 10   # 산출세액 (10원 미만 절사)
+    local_tax = income_tax // 10 // 10 * 10                      # 지방소득세 10% (10원 미만 절사)
+    return {
+        "service_years_deduction": round(years_ded),
+        "converted_pay": round(converted),
+        "converted_pay_deduction": round(converted_ded),
+        "tax_base": round(base),
+        "converted_tax": round(converted_tax),
+        "income_tax": income_tax,
+        "local_tax": local_tax,
+        "net_pay": round(pay) - income_tax - local_tax,
+    }
+
+
 def earned_income_tax_credit(calculated_tax, gross_annual):
     # 근로소득세액공제 (소득세법 제59조)
     if calculated_tax <= 1_300_000:
@@ -152,3 +200,10 @@ if __name__ == "__main__":
     for salary in [30_000_000, 36_000_000, 50_000_000, 80_000_000]:
         r = calculate(salary)
         print(f"연봉 {salary:,}원 -> 월 실수령액 약 {r['net_monthly']:,}원 (공제 {r['total_deduction']:,}원)")
+
+    # 국세청 퇴직소득세 계산방법 예시: 퇴직급여 1억원, 근속 20년
+    t = retirement_income_tax(100_000_000, 20)
+    assert (t["service_years_deduction"], t["converted_pay"], t["converted_pay_deduction"],
+            t["tax_base"], t["converted_tax"], t["income_tax"]) == (
+        40_000_000, 36_000_000, 24_800_000, 11_200_000, 672_000, 1_120_000), t
+    print("퇴직소득세 국세청 예시 일치:", t)
